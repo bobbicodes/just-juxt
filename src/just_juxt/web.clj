@@ -14,19 +14,22 @@
                     {:oauth-token "secret"}))
 
 (defn most-recent-juxt []
-  (str (:html_url (first (:items (json/read-str (str (:body (juxt-query))) :key-fn keyword))))))
+  (str (:html_url (first (:items (json/read-str (str (:body (juxt-query)))
+                                                :key-fn keyword))))))
 
 (defn raw [url]
   (str/replace (str/replace url "/blob/" "/")
    "github.com" "raw.githubusercontent.com"))
 
 (defn content []
-  (str "Source: " (most-recent-juxt) "\n\n" (slurp (raw (most-recent-juxt)))))
+  ((juxt #(str "Source: " % "\n\n")
+         #(slurp (raw %)))
+   (most-recent-juxt)))
 
 (defn splash []
   {:status 200
    :headers {"Content-Type" "text/plain"}
-   :body (content)})
+   :body (apply str (content))})
 
 (defroutes app
   (GET "/" []
