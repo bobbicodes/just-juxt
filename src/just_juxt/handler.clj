@@ -8,12 +8,21 @@
 
 (def juxt-url
   (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
-              {:oauth-token "nope"}))
-  
+              {:oauth-token "secret"}))
+
+(def juxt1 (str (:html_url (first (:items (json/read-str (str (:body juxt-url)) :key-fn keyword))))))
+
+(defn raw [url]
+  (clojure.string/replace
+   (clojure.string/replace url "/blob/" "/")
+   "github.com" "raw.githubusercontent.com"))
+
 (defn handler [request]
   {:status 200
    :headers {"Content-Type" "text/plain"}
-   :body (str (first (:items (json/read-str (str (:body juxt-url)) :key-fn keyword))))})
+   :body (slurp (raw juxt1))})
+
+
 
 (defn -main []
   (jetty/run-jetty handler {:port 3000}))
