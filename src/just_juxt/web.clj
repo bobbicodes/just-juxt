@@ -3,26 +3,24 @@
             [compojure.handler :refer [site]]
             [compojure.route :as route]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.data.json :as json]
             [clj-http.client :as client]
             [ring.adapter.jetty :as jetty]
             [environ.core :refer [env]]))
 
-(def juxt-query
-  (atom (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
-                    {:oauth-token "secret"})))
+(defn juxt-query []
+  (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
+                    {:oauth-token "secret"}))
 
 (defn most-recent-juxt []
-  (str (:html_url (first (:items (json/read-str (str (:body @juxt-query)) :key-fn keyword))))))
+  (str (:html_url (first (:items (json/read-str (str (:body (juxt-query))) :key-fn keyword))))))
 
 (defn raw [url]
-  (clojure.string/replace
-   (clojure.string/replace url "/blob/" "/")
+  (str/replace (str/replace url "/blob/" "/")
    "github.com" "raw.githubusercontent.com"))
 
 (defn content []
-  (reset! juxt-query (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
-                                 {:oauth-token "secret"}))
   (str "Source: " (most-recent-juxt) "\n\n" (slurp (raw (most-recent-juxt)))))
 
 (defn splash []
