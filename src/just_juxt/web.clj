@@ -29,7 +29,7 @@
 
 (defn content []
   ((juxt #(str (extract-juxt (slurp (raw %))) "\n\n")
-         #(str "Source: " % "\n\n")) (most-recent-juxt)))
+         #(str "Source: " %)) (most-recent-juxt)))
 
 (defn splash []
   {:status 200
