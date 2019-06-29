@@ -7,24 +7,29 @@
             [clojure.data.json :as json]
             [clj-http.client :as client]
             [ring.adapter.jetty :as jetty]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [clojure.string :as str]))
 
 (defn juxt-query []
   (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
                     {:oauth-token "secret"}))
 
 (defn most-recent-juxt []
-  (str (:html_url (first (:items (json/read-str (str (:body (juxt-query)))
-                                                :key-fn keyword))))))
+  (:html_url (first
+    (:items
+      (json/read-str (:body (juxt-query))
+      :key-fn keyword)))))
 
 (defn raw [url]
   (str/replace (str/replace url "/blob/" "/")
    "github.com" "raw.githubusercontent.com"))
 
+(defn extract-juxt [s]
+  (re-find #"\([^(]*\(juxt[^\)]*\)[^\)]*\)" s))
+
 (defn content []
-  ((juxt #(str "Source: " % "\n\n")
-         #(slurp (raw %)))
-   (most-recent-juxt)))
+  ((juxt #(str (extract-juxt (slurp (raw %))) "\n\n")
+         #(str "Source: " % "\n\n")) (most-recent-juxt)))
 
 (defn splash []
   {:status 200
