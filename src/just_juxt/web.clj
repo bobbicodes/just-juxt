@@ -7,8 +7,7 @@
             [clojure.data.json :as json]
             [clj-http.client :as client]
             [ring.adapter.jetty :as jetty]
-            [environ.core :refer [env]]
-            [clojure.string :as str]))
+            [environ.core :refer [env]]))
 
 (defn juxt-query []
   (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
