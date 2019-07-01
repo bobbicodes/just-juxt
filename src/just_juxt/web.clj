@@ -7,11 +7,23 @@
             [clojure.data.json :as json]
             [clj-http.client :as client]
             [ring.adapter.jetty :as jetty]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [clojure.string :as str]
+            [twitter.oauth :as oauth]
+            [twitter.api.restful :as rest]))
 
 (defn juxt-query []
   (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
-                    {:oauth-token "secret"}))
+                    {:oauth-token "github token"}))
+
+(def creds (oauth/make-oauth-creds
+            "API key"
+            "API secret key"
+            "Access token"
+            "Access token secret"))
+
+(defn tweet [msg]
+  (rest/statuses-update :oauth-creds creds :params {:status msg}))
 
 (defn most-recent-juxt []
   (:html_url (first
