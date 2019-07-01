@@ -16,6 +16,21 @@
   (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
                     {:oauth-token "github token"}))
 
+(defn juxt-urls []
+  (map #(:html_url %)
+       (:items
+        (json/read-str
+         (:body (juxt-query))
+         :key-fn keyword))))
+
+(defn raw [url]
+  (str/replace (str/replace url "/blob/" "/")
+               "github.com" "raw.githubusercontent.com"))
+
+(defn juxt-sources []
+  (map #(slurp (raw %))
+       (juxt-urls)))
+
 (def creds (oauth/make-oauth-creds
             "API key"
             "API secret key"
@@ -30,10 +45,6 @@
     (:items
       (json/read-str (:body (juxt-query))
       :key-fn keyword)))))
-
-(defn raw [url]
-  (str/replace (str/replace url "/blob/" "/")
-   "github.com" "raw.githubusercontent.com"))
 
 (defn extract-juxt [s]
   (re-find #"\([^(]*\(juxt[^\)]*\)[^\)]*\)" s))
