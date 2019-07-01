@@ -46,11 +46,20 @@
       (json/read-str (:body (juxt-query))
       :key-fn keyword)))))
 
-(defn extract-juxt [s]
+(defn juxt2 [s]
   (re-find #"\([^(]*\(juxt[^\)]*\)[^\)]*\)" s))
 
+(defn juxt3 [s]
+  (re-find #"\([^(]*\([^(]*\(juxt[^\)]*\)[^\)]*\)[^\)]*\)" s))
+
+(defn juxt4 [s]
+  (re-find #"\([^(]*\([^(]*\([^(]*\(juxt[^\)]*\)[^\)]*\)[^\)]*\)[^\)]*\)" s))
+
+(defn juxt5 [s]
+  (re-find #"\([^(]*\([^(]*\([^(]*\([^(]*\(juxt[^\)]*\)[^\)]*\)[^\)]*\)[^\)]*\)[^\)]*\)" s))
+
 (defn content []
-  ((juxt #(str (extract-juxt (slurp (raw %))) "\n\n")
+  ((juxt #(str (juxt2 (slurp (raw %))) "\n\n")
          #(str "Source: " %)) (most-recent-juxt)))
 
 (defn splash []
