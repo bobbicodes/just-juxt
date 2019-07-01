@@ -11,7 +11,9 @@
             [clojure.string :as str]
             [twitter.oauth :as oauth]
             [twitter.api.restful :as rest]
-            [next.jdbc :as jdbc]))
+            [next.jdbc :as jdbc]
+            [hiccup.page :as page]
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
 
 (defn juxt-query []
   (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
@@ -47,6 +49,9 @@
     insert into results(url)
     values ('" juxt-url "');")]))
 
+(defn get-all-juxts []
+  (jdbc/execute! ds ["select * from results"]))
+
 (def creds (oauth/make-oauth-creds
             "API key"
             "API secret key"
@@ -74,25 +79,44 @@
 (defn juxt5 [s]
   (re-find #"\([^(]*\([^(]*\([^(]*\([^(]*\(juxt[^\)]*\)[^\)]*\)[^\)]*\)[^\)]*\)[^\)]*\)" s))
 
+(defn juxt6 [s]
+  (re-find #"\([^(]*\([^(]*\([^(]*\([^(]*\([^(]*\(juxt[^\)]*\)[^\)]*\)[^\)]*\)[^\)]*\)[^\)]*\)[^\)]*\)" s))
+
 (defn content []
   ((juxt #(str (juxt2 (slurp (raw %))) "\n\n")
          #(str "Source: " %)) (most-recent-juxt)))
+
+(defn gen-page-head [title]
+   [:head
+    [:title (str "Juxts: " title)]
+    (page/include-css "/css/styles.css")])
+
+(defn all-juxts-page
+  []
+  (let [all-juxts (get-all-juxts)]
+    (page/html5
+     (gen-page-head "All juxts in the db")
+     [:h1 "All juxts"]
+     [:table
+      [:tr [:th "url"]]
+      (for [url all-juxts]
+        [:tr [:td (:results/url url)]])])))
 
 (defn splash []
   {:status 200
    :headers {"Content-Type" "text/plain"}
    :body (apply str (content))})
 
-(defroutes app
+(defroutes app-routes
   (GET "/" []
-       (splash))
+       (all-juxts-page))
   (ANY "*" []
-       (route/not-found (slurp (io/resource "404.html")))))
+    (route/resources "/")
+    (route/not-found (slurp (io/resource "404.html")))))
+
+(def app
+  (wrap-defaults app-routes site-defaults))
 
 (defn -main [& [port]]
   (let [port (Integer. (or port (env :port) 5000))]
     (jetty/run-jetty (site #'app) {:port port :join? false})))
-
-;; For interactive development:
-;; (.stop server)
-;; (def server (-main))
