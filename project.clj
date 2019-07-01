@@ -11,7 +11,8 @@
                  [org.clojure/data.json "0.2.6"]
                  [instaparse "1.4.10"]
                  [twitter-api "1.8.0"]
-                 [seancorfield/next.jdbc "1.0.0"]]
+                 [seancorfield/next.jdbc "1.0.0"]
+                 [org.postgresql/postgresql "9.4-1201-jdbc41"]]
   :min-lein-version "2.0.0"
   :plugins [[environ/environ.lein "0.3.1"]]
   :hooks [environ.leiningen.hooks]
