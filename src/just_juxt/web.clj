@@ -10,7 +10,8 @@
             [environ.core :refer [env]]
             [clojure.string :as str]
             [twitter.oauth :as oauth]
-            [twitter.api.restful :as rest]))
+            [twitter.api.restful :as rest]
+            [next.jdbc :as jdbc]))
 
 (defn juxt-query []
   (client/get "https://api.github.com/search/code?q=juxt+in:file+language:clojure&sort=indexed"
@@ -30,6 +31,21 @@
 (defn juxt-sources []
   (map #(slurp (raw %))
        (juxt-urls)))
+
+(def db {:dbtype "postgresql" :dbname "juxts"})
+
+(def ds (jdbc/get-datasource db))
+
+;(jdbc/execute! ds ["
+;create table results (
+;  id serial primary key,
+;  url varchar(255) not null
+;)"])
+
+(defn insert [juxt-url]
+  (jdbc/execute! ds [(str "
+    insert into results(url)
+    values ('" juxt-url "');")]))
 
 (def creds (oauth/make-oauth-creds
             "API key"
